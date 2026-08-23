@@ -1,0 +1,32 @@
+name: 6-Hour Free RDP
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Desktop & XRDP Server
+        run: |
+          sudo apt update
+          sudo apt install -y xfce4 xfce4-goodies xrdp
+          echo "xfce4-session" > ~/.xsession
+          sudo service xrdp start
+          echo "runner:Pass12345@" | sudo chpasswd
+
+      - name: Start Pinggy Tunnel
+        run: |
+          ssh -p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no a.pinggy.io > pinggy.log 2>&1 &
+          sleep 8
+
+      - name: Get RDP IP and Port
+        run: |
+          echo "=========================================="
+          echo "--- CONNECTING DETAILS ---"
+          cat pinggy.log | grep -o 'tcp://[^"]*' || cat pinggy.log
+          echo "Username: runner"
+          echo "Password: Pass12345@"
+          echo "=========================================="
+
+      - name: Keep Alive (6 Hours)
+        run: sleep 21600
