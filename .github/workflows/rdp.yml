@@ -1,4 +1,4 @@
-name: 6-Hour Free RDP
+name: Windows 10/11 RDP
 
 on: workflow_dispatch
 
@@ -6,26 +6,35 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Desktop & XRDP Server
+      - name: Enable KVM & Install Docker Windows
         run: |
           sudo apt update
-          sudo apt install -y xfce4 xfce4-goodies xrdp
-          echo "xfce4-session" > ~/.xsession
-          sudo service xrdp start
-          echo "runner:Pass12345@" | sudo chpasswd
+          sudo apt install -y qemu-kvm
+          sudo usermod -aG kvm $USER
+          docker run -d --name windows \
+            --device=/dev/kvm \
+            -p 3389:3389 \
+            -e WIN_VERSION="10" \
+            -e RAM_SIZE="6G" \
+            -e CPU_CORES="2" \
+            --cap-add=NET_ADMIN \
+            dockur/windows
+
+      - name: Wait for Windows Setup (3 Minutes)
+        run: sleep 180
 
       - name: Start Pinggy Tunnel
         run: |
           ssh -p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no tcp@a.pinggy.io > pinggy.log 2>&1 &
-          sleep 8
+          sleep 10
 
-      - name: Get RDP IP and Port
+      - name: Get Connection Details
         run: |
           echo "=========================================="
-          echo "--- CONNECTING DETAILS ---"
+          echo "--- WINDOWS RDP DETAILS ---"
           cat pinggy.log | grep -o 'tcp://[^"]*' || cat pinggy.log
-          echo "Username: runner"
-          echo "Password: Pass12345@"
+          echo "Default Windows User: docker"
+          echo "Password: (Leave Password Blank / Empty)"
           echo "=========================================="
 
       - name: Keep Alive (6 Hours)
