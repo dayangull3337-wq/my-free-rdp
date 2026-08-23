@@ -15,13 +15,12 @@ jobs:
           Add-LocalGroupMember -Group "Administrators" -Member "runner" -ErrorAction SilentlyContinue
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "runner" -ErrorAction SilentlyContinue
 
-      - name: Download & Setup Ngrok
+      - name: Install & Setup Ngrok
         run: |
-          Invoke-WebRequest -Uri "https://bin.equinox.io/c/bNyA1xipbS4/ngrok-v3-stable-windows-amd64.zip" -OutFile "ngrok.zip"
-          Expand-Archive -Path "ngrok.zip" -DestinationPath "."
+          choco install ngrok -y
           # Yahan APNA_NGROK_AUTHTOKEN ki jagah apna token paste karein
-          .\ngrok.exe config add-authtoken APNA_NGROK_AUTHTOKEN
+          ngrok config add-authtoken APNA_NGROK_AUTHTOKEN
 
       - name: Start Ngrok & Connect
         run: |
-          .\ngrok.exe tcp 3389
+          ngrok tcp 3389
