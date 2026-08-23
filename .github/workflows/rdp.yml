@@ -1,41 +1,34 @@
-name: Windows 10/11 RDP
+name: Windows 10 RDP
 
 on: workflow_dispatch
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
-      - name: Enable KVM & Install Docker Windows
+      - name: Enable RDP & Set Password
         run: |
-          sudo apt update
-          sudo apt install -y qemu-kvm
-          sudo usermod -aG kvm $USER
-          docker run -d --name windows \
-            --device=/dev/kvm \
-            -p 3389:3389 \
-            -e WIN_VERSION="10" \
-            -e RAM_SIZE="6G" \
-            -e CPU_CORES="2" \
-            --cap-add=NET_ADMIN \
-            dockur/windows
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          $password = ConvertTo-SecureString "Pass12345@" -AsPlainText -Force
+          New-LocalUser -Name "runner" -Password $password -FullName "Runner User" -Description "RDP User"
+          Add-LocalGroupMember -Group "Administrators" -Member "runner"
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "runner"
 
-      - name: Wait for Windows Setup (3 Minutes)
-        run: sleep 180
-
-      - name: Start Pinggy Tunnel
+      - name: Install & Start Pinggy Tunnel
         run: |
-          ssh -p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no tcp@a.pinggy.io > pinggy.log 2>&1 &
-          sleep 10
+          curl.exe -o pinggy.exe https://github.com/pinggy-io/pinggy-cli/releases/latest/download/pinggy_windows_amd64.exe
+          Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -R 0:localhost:3389 tcp@a.pinggy.io" -RedirectStandardOutput "pinggy.log" -NoNewWindow
+          Start-Sleep -Seconds 10
 
       - name: Get Connection Details
         run: |
-          echo "=========================================="
-          echo "--- WINDOWS RDP DETAILS ---"
-          cat pinggy.log | grep -o 'tcp://[^"]*' || cat pinggy.log
-          echo "Default Windows User: docker"
-          echo "Password: (Leave Password Blank / Empty)"
-          echo "=========================================="
+          Write-Output "=========================================="
+          Write-Output "--- WINDOWS RDP DETAILS ---"
+          Get-Content pinggy.log | Select-String "tcp://"
+          Write-Output "Username: runner"
+          Write-Output "Password: Pass12345@"
+          Write-Output "=========================================="
 
       - name: Keep Alive (6 Hours)
-        run: sleep 21600
+        run: Start-Sleep -Seconds 21600
