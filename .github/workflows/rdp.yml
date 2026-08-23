@@ -15,20 +15,6 @@ jobs:
           Add-LocalGroupMember -Group "Administrators" -Member "runner" -ErrorAction SilentlyContinue
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "runner" -ErrorAction SilentlyContinue
 
-      - name: Start Pinggy Tunnel via Native SSH
+      - name: Connect Tunnel & Show IP
         run: |
-          $process = Start-Process -FilePath "ssh" -ArgumentList "-p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no tcp@a.pinggy.io" -RedirectStandardOutput "pinggy.log" -RedirectStandardError "pinggy_err.log" -PassThru -NoNewWindow
-          Start-Sleep -Seconds 10
-
-      - name: Get Connection Details
-        run: |
-          Write-Output "=========================================="
-          Write-Output "--- WINDOWS RDP DETAILS ---"
-          if (Test-Path pinggy.log) { Get-Content pinggy.log | Select-String "tcp://" }
-          if (Test-Path pinggy_err.log) { Get-Content pinggy_err.log | Select-String "tcp://" }
-          Write-Output "Username: runner"
-          Write-Output "Password: Pass12345@"
-          Write-Output "=========================================="
-
-      - name: Keep Alive (6 Hours)
-        run: Start-Sleep -Seconds 21600
+          ssh -o StrictHostKeyChecking=no -R 0:localhost:3389 serveo.net
