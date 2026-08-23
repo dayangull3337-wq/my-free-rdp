@@ -15,12 +15,11 @@ jobs:
           Add-LocalGroupMember -Group "Administrators" -Member "runner" -ErrorAction SilentlyContinue
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "runner" -ErrorAction SilentlyContinue
 
-      - name: Install & Setup Ngrok
+      - name: Download & Start Tunnel
         run: |
-          choco install ngrok -y
-          # Yahan APNA_NGROK_AUTHTOKEN ki jagah apna token paste karein
-          ngrok config add-authtoken APNA_NGROK_AUTHTOKEN
+          Invoke-WebRequest -Uri "https://github.com/LocalXpose/loclx-cli/releases/latest/download/loclx-windows-amd64.zip" -OutFile "loclx.zip"
+          Expand-Archive -Path "loclx.zip" -DestinationPath "."
+          Start-Process -FilePath ".\loclx.exe" -ArgumentList "tunnel tcp --to 127.0.0.1:3389"
 
-      - name: Start Ngrok & Connect
-        run: |
-          ngrok tcp 3389
+      - name: Keep Alive (6 Hours)
+        run: Start-Sleep -Seconds 21600
