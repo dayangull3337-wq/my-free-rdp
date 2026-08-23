@@ -15,6 +15,13 @@ jobs:
           Add-LocalGroupMember -Group "Administrators" -Member "runner" -ErrorAction SilentlyContinue
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "runner" -ErrorAction SilentlyContinue
 
-      - name: Connect Tunnel & Show IP
+      - name: Download & Setup Ngrok
         run: |
-          ssh -o StrictHostKeyChecking=no -R 0:localhost:3389 serveo.net
+          Invoke-WebRequest -Uri "https://bin.equinox.io/c/bNyA1xipbS4/ngrok-v3-stable-windows-amd64.zip" -OutFile "ngrok.zip"
+          Expand-Archive -Path "ngrok.zip" -DestinationPath "."
+          # Yahan APNA_NGROK_AUTHTOKEN ki jagah apna token paste karein
+          .\ngrok.exe config add-authtoken APNA_NGROK_AUTHTOKEN
+
+      - name: Start Ngrok & Connect
+        run: |
+          .\ngrok.exe tcp 3389
