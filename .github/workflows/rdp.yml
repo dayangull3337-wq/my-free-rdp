@@ -15,11 +15,10 @@ jobs:
           Add-LocalGroupMember -Group "Administrators" -Member "runner" -ErrorAction SilentlyContinue
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "runner" -ErrorAction SilentlyContinue
 
-      - name: Download & Start Tunnel
+      - name: Install Bore Tunnel
         run: |
-          Invoke-WebRequest -Uri "https://github.com/LocalXpose/loclx-cli/releases/latest/download/loclx-windows-amd64.zip" -OutFile "loclx.zip"
-          Expand-Archive -Path "loclx.zip" -DestinationPath "."
-          Start-Process -FilePath ".\loclx.exe" -ArgumentList "tunnel tcp --to 127.0.0.1:3389"
+          choco install bore-cli -y
 
-      - name: Keep Alive (6 Hours)
-        run: Start-Sleep -Seconds 21600
+      - name: Start Bore Tunnel & Show Connection
+        run: |
+          bore local 3389 --to bore.pub
