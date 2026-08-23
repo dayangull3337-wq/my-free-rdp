@@ -16,7 +16,7 @@ jobs:
 
       - name: Start Pinggy Tunnel
         run: |
-          ssh -p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no a.pinggy.io > pinggy.log 2>&1 &
+          ssh -p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no tcp@a.pinggy.io > pinggy.log 2>&1 &
           sleep 8
 
       - name: Get RDP IP and Port
